@@ -3,16 +3,17 @@ package httpserver_v1;
 import java.io.*;
 import java.net.*;
 
-class HttpServer
+class HttpServer extends Thread
 {
     private Socket s;
     
         public HttpServer(Socket s)
     {
         this.s = s;
+        start();
     }
 
-        public void work()
+        public void run()
     {
         try
         {
@@ -188,7 +189,7 @@ class HttpServer
             while(true)
             {
                 HttpServer serv = new HttpServer(server.accept());
-                serv.work();
+                //serv.run();
             }
         }
         catch(Exception e)
