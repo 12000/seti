@@ -29,7 +29,7 @@ class HttpServer
             //String request = new String();
             //request = buf.toString();
             String request = new String(buffer, 0, r);
-            System.out.println("------------------------------------------------");
+            System.out.printf("\n------------------------------------------------\n");
             System.out.println("Request messsge:");
             System.out.println(request);
             
@@ -46,8 +46,15 @@ class HttpServer
                 System.out.println(a);
             }
             a = request.indexOf("GET ", 0)+"GET ".length();
-            if(a < request.length()) 
-                System.out.println("Ошибка - файл недоступен");
+            if(a < "GET ".length()){ 
+                System.out.println("Ошибка - нeправильный запрос");
+                //посылаем сообщение о неправильном запросе
+                String answer = "HTTP/1.1 400 Bad Request\n";
+                os.write(answer.getBytes());
+                s.close();
+                return;
+            }
+            
             int e = request.indexOf(" ", a);
             if(e < 0) e = " ".length();
                 URI = (request.substring(a, e)).trim();
@@ -60,13 +67,13 @@ class HttpServer
             System.out.println(URI);
             
             // строка - нормальный путь
-            String way = "." + File.separator;
+            String way = ".\\";
             char b;
             for(int i = 0; i < URI.length(); i++)
             {
                 b = URI.charAt(i);
                 if(b == '/')
-                    way = way + File.separator;
+                    way = way + "\\";
                 else
                     way = way + b;
             }
@@ -77,17 +84,24 @@ class HttpServer
             // открывается файл
             File f = new File(way);
             boolean access = !f.exists(); // проверка на доступность
-            
-            if(!access){
+            if(access)
+            {
+                System.out.println("Файл не найден");
+                String answer = "HTTP/1.1 404 Not Found\n";
+                os.write(answer.getBytes());
+                s.close();
+                return;
+            }
+            else{
                 if(f.isDirectory()){
-                    if(way.lastIndexOf(""+File.separator) == way.length()-1)
+                    if(way.lastIndexOf("\\") == way.length()-1)
                         way = way + "first.html";
                 
                     f = new File(way);
                     access = !f.exists();
                 }
             }
-            System.out.println("acces");
+            System.out.println("access");
             System.out.println(access);
             
             System.out.println("Last way");
@@ -95,6 +109,26 @@ class HttpServer
 
             //ответ
             String mime = "text/html";
+            //для разных типов файла
+            int f_type = way.lastIndexOf(".");
+            if(r > 0)
+            {
+                String s_type = way.substring(f_type);
+                if(s_type.equalsIgnoreCase(".html"))
+                    mime = "text/html";
+                else if(s_type.equalsIgnoreCase(".htm"))
+                    mime = "text/html";
+                else if(s_type.equalsIgnoreCase(".gif"))
+                    mime = "image/gif";
+                else if(s_type.equalsIgnoreCase(".jpg"))
+                    mime = "image/jpeg";
+                else if(s_type.equalsIgnoreCase(".jpeg"))
+                    mime = "image/jpeg";
+                else if(s_type.equalsIgnoreCase(".bmp"))
+                    mime = "image/x-xbitmap";
+                
+                System.out.println(s_type);
+            }
             String answer = "HTTP/1.1 200 OK\n";
             
             /*entity-header  = Allow                   ; 
@@ -145,7 +179,7 @@ class HttpServer
     {
         try
         {
-            int port = 80;
+            int port = 8080;
             InetAddress addr = InetAddress.getByName("127.0.0.1");
             ServerSocket server = new ServerSocket(port, 0, addr);
             System.out.println("Server started!");
